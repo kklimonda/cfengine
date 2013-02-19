@@ -9,7 +9,7 @@ body package_method gem
   package_installed_regex => ".*"; # all reported are installed
 
   package_add_command => "/usr/bin/gem install ";
-  package_delete_command => "/usr/bin/gem uninstall ";
+  package_delete_command => "/usr/bin/gem uninstall -I -a -x ";
   package_update_command => "/usr/bin/gem update ";
 
   package_delete_convention => "$(name)";
@@ -27,10 +27,10 @@ body package_method gem_versioned
   package_installed_regex => ".*"; # all reported are installed
 
   package_add_command => "/usr/bin/gem install ";
-  package_delete_command => "/usr/bin/gem uninstall ";
+  package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem update ";
 
-  package_delete_convention => "$(name)";
+  package_delete_convention => "$(name) -v '$(version)'";
   package_name_convention => "$(name) -v '$(version)'";
 }
 
@@ -45,9 +45,9 @@ body package_method gem_fuzzy_versioned
   package_installed_regex => ".*"; # all reported are installed
 
   package_add_command => "/usr/bin/gem install ";
-  package_delete_command => "/usr/bin/gem uninstall ";
+  package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem update ";
 
-  package_delete_convention => "$(name)";
+  package_delete_convention => "$(name) -v '$(version)'";
   package_name_convention => "$(name) -v '~> $(version)'";
 }
