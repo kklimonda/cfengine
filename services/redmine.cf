@@ -267,10 +267,10 @@ bundle agent redmine_configure_nginx(instance)
         create => "true",
         edit_defaults => empty,
         edit_line => expand_template("/tmp/nginx_site.tmpl"),
-        classes => if_repaired("restart_nginx");
+        classes => if_repaired("reload_nginx");
       "/etc/nginx/sites-enabled/$(instance)"
         link_from => ln_s("/etc/nginx/sites-available/$(instance)"),
-        classes => if_repaired("restart_nginx");
+        classes => if_repaired("reload_nginx");
 
   commands:
     reload_nginx::
