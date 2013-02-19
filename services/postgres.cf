@@ -3,11 +3,12 @@ bundle agent postgres
 
   packages:
       "postgresql-client-common";
-      "postgresql-9.1";
+      "postgresql-9.1" handle => "postgresql_package";
 
   files:
       "/etc/postgresql/9.1/main/pg_hba.conf"
         comment => "Switch local accounts, other than postgresql, to the md5 authentication method",
+        depends_on => { "postgresql_package" },
         edit_line => modify_local_authentication_method,
         classes => if_repaired("restart_postgresql");
 
