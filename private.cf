@@ -1,0 +1,5 @@
+bundle common private_g
+{
+  vars:
+    "password[postgres_redmine_akronet]" string => "";
+}

@@ -9,7 +9,7 @@ bundle common redmine_g {
       "conf[akronet][host]" string => "localhost";
       "conf[akronet][database]" string => "redmine_akronet_production";
       "conf[akronet][username]" string => "akronet";
-      "conf[akronet][password]" string => "P@ssw0rd";
+      "conf[akronet][password]" string => "$(private_g.password[postgres_redmine_akronet])";
       "conf[akronet][root]" string => "/srv/akronet.synth.pl";
       "conf[akronet][plugin]" slist => { "redmine_akronet_mods" };
       "conf[akronet][port]" string => "3000";

@@ -49,6 +49,9 @@ body common control
           # Global common bundles
             "def.cf",
 
+          # Private data (passwords), not to be shared with anyone
+            "private.cf",
+
           # Control body for agents
             "controls/cf_agent.cf",
             "controls/cf_execd.cf",
@@ -145,6 +148,10 @@ bundle agent configfiles
         handle => "apt_config",
         comment => "Disable Recomendation and Suggestion installation in Apt",
         edit_line => edit_apt_config;
+
+      # A deployment SSH key, not available in the public repository
+      "/root/.ssh/id_rsa"
+        copy_from => secure_cp("$(sys.workdir)/masterfiles/templates/deployment.sshkey", "$(sys.policy_hub)");
 
   methods:
       "sshd" usebundle => edit_sshd;
