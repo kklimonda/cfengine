@@ -61,6 +61,7 @@ body common control
             "libraries/ruby.cf",
             "libraries/cfengine_stdlib.cf",
 
+            "services/gitolite.cf",
             "services/postgres.cf",
             "services/redmine.cf",
             "services/nginx.cf",
