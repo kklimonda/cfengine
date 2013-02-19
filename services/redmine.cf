@@ -216,6 +216,10 @@ bundle agent redmine_configure_unicorn(instance)
       "pid_file" string => "$(root)/unicorn.pid";
       "log_file" string => "$(root)/log/unicorn.log";
 
+  processes:
+      ".*unicorn_rails.*$(instance)\.ru.*"
+        restart_class => "restart_unicorn";
+
   files:
       "/usr/local/etc/unicorn/."
         create => "true";
