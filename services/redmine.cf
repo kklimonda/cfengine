@@ -210,6 +210,10 @@ bundle agent redmine_install_plugin(instance, plugin_name)
 
 bundle agent redmine_configure_unicorn(instance)
 {
+  packages:
+      "unicorn"
+        package_method => gem;
+
   vars:
       "port" string => "$(redmine_g.conf[$(instance)][port])";
       "root" string => "$(redmine_g.conf[$(instance)][root])";
