@@ -1,0 +1,53 @@
+body package_method gem
+{
+  package_changes => "bulk";
+
+  package_list_command => "/usr/bin/gem list";
+
+  package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
+  package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
+  package_installed_regex => ".*"; # all reported are installed
+
+  package_add_command => "/usr/bin/gem install ";
+  package_delete_command => "/usr/bin/gem uninstall ";
+  package_update_command => "/usr/bin/gem update ";
+
+  package_delete_convention => "$(name)";
+  package_name_convention => "$(name)";
+}
+
+body package_method gem_versioned
+{
+  package_changes => "bulk";
+
+  package_list_command => "/usr/bin/gem list";
+
+  package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
+  package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
+  package_installed_regex => ".*"; # all reported are installed
+
+  package_add_command => "/usr/bin/gem install ";
+  package_delete_command => "/usr/bin/gem uninstall ";
+  package_update_command => "/usr/bin/gem update ";
+
+  package_delete_convention => "$(name)";
+  package_name_convention => "$(name) -v '$(version)'";
+}
+
+body package_method gem_fuzzy_versioned
+{ 
+  package_changes => "bulk";
+
+  package_list_command => "/usr/bin/gem list";
+
+  package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
+  package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
+  package_installed_regex => ".*"; # all reported are installed
+
+  package_add_command => "/usr/bin/gem install ";
+  package_delete_command => "/usr/bin/gem uninstall ";
+  package_update_command => "/usr/bin/gem update ";
+
+  package_delete_convention => "$(name)";
+  package_name_convention => "$(name) -v '~> $(version)'";
+}

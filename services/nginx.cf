@@ -1,0 +1,8 @@
+bundle agent nginx
+{
+  packages:
+    web_server::
+      "nginx" package_policy => "addupdate";
+    rails_app_server::
+      "unicorn" package_method => gem, package_policy => "add";
+}

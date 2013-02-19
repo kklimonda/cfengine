@@ -1,0 +1,31 @@
+bundle agent mongrel2
+{
+  packages:
+      "libzmq1"
+        package_policy => "addupdate";
+      "sqlite3"
+        package_policy => "addupdate";
+
+  classes:
+      "mongrel2_installed" expression => fileexists("/usr/local/bin/mongrel2");
+
+  methods:
+    !mongrel2_installed::
+      "mongrel2_install" usebundle => mongrel2_install;
+}
+
+bundle agent mongrel2_install
+{
+  vars:
+      "url" string => "http://syntaxhighlighted.com/~kklimonda/software/mongrel2-1.8.0.$(sys.arch).tar.xz";
+
+  classes:
+      "mongrel2_tarball_present" expression => fileexists("/tmp/mongrel2.tar.xz");
+
+  commands:
+    !mongrel2_tarball_present::
+      "/usr/bin/wget $(url) -O /tmp/mongrel2.tar.xz";
+    any::
+      "/bin/tar Jxf /tmp/mongrel2.tar.xz -C / --strip-components 1";
+      
+}

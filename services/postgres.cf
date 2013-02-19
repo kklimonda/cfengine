@@ -1,0 +1,24 @@
+bundle agent postgres
+{
+
+  packages:
+      "postgresql-client-common";
+      "postgresql-9.1";
+
+  files:
+      "/etc/postgresql/9.1/main/pg_hba.conf"
+        comment => "Switch local accounts, other than postgresql, to the md5 authentication method",
+        edit_line => modify_local_authentication_method,
+        classes => if_repaired("restart_postgresql");
+
+  commands:
+    restart_postgresql::
+      "/usr/sbin/service postgresql restart";
+}
+
+bundle edit_line modify_local_authentication_method
+{
+  replace_patterns:
+      "^local.*all.*all.*peer$"
+        replace_with => value("local   all             all                                     md5");
+}

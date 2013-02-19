@@ -1,0 +1,21 @@
+working_directory "$(redmine_configure_unicorn.root)"
+pid "$(redmine_configure_unicorn.pid_file)"
+
+preload_app true
+timeout 60
+worker_processes 1
+listen $(redmine_configure_unicorn.port)
+stderr_path('$(redmine_configure_unicorn.log_file)')
+
+GC.respond_to?(:copy_on_write_friendly=) and GC.copy_on_write_friendly = true
+
+after_fork do |server, worker|
+        #start the worker on port 4000, 4001, 4002 etc...
+        addr = "0.0.0.0:#{$(redmine_configure_unicorn.port) + worker.nr}"
+        # infinite tries to start the worker
+        server.listen(addr, :tries => -1, :delay => -1, :backlog => 128)
+
+        #Drop privileges if running as root
+        worker.user('www-data', 'www-data') if Process.euid == 0
+end
+

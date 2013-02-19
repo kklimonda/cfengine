@@ -1,0 +1,14 @@
+description "$(redmine_configure_unicorn.instance) Unicorn application server"
+
+start on runlevel [2]
+stop on runlevel [016]
+
+console owner
+
+script
+  APP_ROOT=$(redmine_configure_unicorn.root)
+  /usr/local/bin/unicorn_rails -c /usr/local/etc/unicorn/$(redmine_configure_unicorn.instance).ru -E production
+end script
+
+respawn
+

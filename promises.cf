@@ -1,0 +1,142 @@
+
+body common control
+{ 
+  any::
+      bundlesequence => {
+        "cfengine_repo",
+        "corepackages",
+        "configfiles",
+        "postgres",
+        "nginx",
+        "redmine"
+      };
+
+      inputs => {
+          # Global common bundles
+            "def.cf",
+
+          # Control body for agents
+            "controls/cf_agent.cf",
+            "controls/cf_execd.cf",
+            "controls/cf_monitord.cf",
+            "controls/cf_report.cf",
+            "controls/cf_runagent.cf",
+            "controls/cf_serverd.cf",
+
+          # CFEngine3 Standard Library
+            "libraries/ruby.cf",
+            "libraries/cfengine_stdlib.cf",
+
+            "services/postgres.cf",
+            "services/redmine.cf",
+            "services/nginx.cf",
+          };
+
+      version => "0.1";
+}
+
+bundle agent cfengine_repo
+{
+  files:
+      "/etc/apt/sources.list.d/cfengine-community.list"
+        create => "true",
+        edit_line => "cfengine_community_list",
+        classes => if_repaired("apt_get_update");
+      
+  classes:
+      "cfengine_gpg_key_installed" expression => returnszero("/usr/bin/apt-key list |grep -q CFEngine", "useshell");
+
+  commands:
+    !cfengine_gpg_key_installed::
+      "/usr/bin/wget \"http://cfengine.com/pub/gpg.key\" -O /tmp/gpg.key";
+      "/usr/bin/apt-key add /tmp/gpg.key";
+
+    apt_get_update::
+      "/usr/bin/apt-get update";
+}
+
+bundle edit_line cfengine_community_list
+{
+  delete_lines:
+      ".*";
+
+  insert_lines:
+      "deb http://cfengine.com/pub/apt precise main";
+}
+
+bundle agent corepackages
+{
+  files:
+      "/tmp/.s.PGSQL.5432"
+        link_from => ln_s("/run/postgresql/.s.PGSQL.5432");
+  vars:
+      "pkglist" slist => { "cfengine-community", "vim", "git" };
+
+  packages:
+    any::
+      "$(pkglist)" package_policy => "addupdate";
+}
+
+bundle agent configfiles
+{
+  vars:
+      "files[sshd]" string => "/etc/ssh/sshd_config";
+
+      "sshd[Protocol]" string => "2";
+      "sshd[X11Forwarding]" string => "no";
+      "sshd[UseDNS]" string => "no";
+      "sshd[PermitRootLogin]" string => "no";
+
+
+  files:
+      "/etc/apt/apt.conf.d/."
+        create => "true";
+      
+      "/etc/apt/apt.conf.d/20recommends"
+        create => "true",
+        handle => "apt_config",
+        comment => "Disable Recomendation and Suggestion installation in Apt",
+        edit_line => edit_apt_config;
+
+  methods:
+      "sshd" usebundle => edit_sshd;
+}
+
+bundle agent edit_sshd
+{
+  packages:
+      "openssh-server";
+
+  files:
+      "$(configfiles.files[sshd])"
+        handle => "sshd_config",
+        comment => "Configure the SSH daemon",
+        edit_line => set_config_values("configfiles.sshd"),
+        classes => if_repaired("restart_sshd");
+
+  commands:
+      restart_sshd.!no_restarts::
+        "/usr/sbin/service ssh reload"
+        handle => "sshd_restart",
+        comment => "Restart the SSH daemon if the configuration changes";
+}
+
+bundle edit_line edit_apt_config
+{
+  delete_lines:
+      ".*";
+
+  insert_lines:
+      "APT::Install-Recommends \"0\";";
+      "APT::Install-Suggests \"0\";";
+}
+
+body database_server postgres_master(user, password)
+{
+  any::
+    db_server_owner => "$(user)";
+    db_server_password => "$(password)";
+    db_server_host => "localhost";
+    db_server_type => "postgres";
+    db_server_connection_db => "postgres";
+}

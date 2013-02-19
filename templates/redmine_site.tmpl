@@ -1,0 +1,20 @@
+upstream unicorn_$(redmine_configure_nginx.instance) {
+  server $(redmine_configure_nginx.upstream_servers) fail_timeout=0;
+}
+
+server {
+  listen 80;
+  server_name $(redmine_configure_nginx.server_name);
+
+  access_log $(redmine_configure_nginx.root)/log/nginx.access.log;
+  error_log $(redmine_configure_nginx.root)/log/nginx.access.log;
+
+  location / {
+    proxy_pass http://unicorn_$(redmine_configure_nginx.instance);
+    break;
+  }
+
+  location ~ ^/(images|javascripts|stylesheets)/ {
+    root $(redmine_configure_nginx.root)/public/;
+  }
+}

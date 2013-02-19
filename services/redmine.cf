@@ -1,0 +1,251 @@
+bundle common redmine_g
+{ 
+  vars:
+    redmine_akronet::
+      "conf[akronet][adapter]" string => "postgresql";
+      "conf[akronet][host]" string => "localhost";
+      "conf[akronet][database]" string => "redmine_akronet_production";
+      "conf[akronet][username]" string => "akronet";
+      "conf[akronet][password]" string => "P@ssw0rd";
+      "conf[akronet][root]" string => "/srv/akronet.synth.pl";
+      "conf[akronet][plugin]" slist => { "redmine_akronet_mods" };
+      "conf[akronet][port]" string => "3000";
+
+    redmine_internal::
+      "conf[internal][adapter]" string => "postgresql";
+      "conf[internal][host]" string => "localhost";
+      "conf[internal][database]" string => "redmine_internal_production";
+      "conf[internal][username]" string => "issues";
+      "conf[internal][password]" string => "P@ssw0rd";
+      "conf[internal][root]" string => "/srv/issues.synth.pl";
+      "conf[internal][plugin]" slist => { cf_null };
+      "conf[internal][port]" string => "3100";
+
+    any::
+      "plugin[redmine_akronet_mods][url]" string => "git@bitbucket.org:kklimonda/redmine_akronet_mods.git";
+} 
+
+bundle agent redmine
+{
+  packages:
+      "rails"
+        package_policy => "add",
+        package_method => gem_versioned,
+        package_version => "2.3.15";
+      "bundler"
+        package_policy => "add",
+        package_method => gem;  
+      "coderay"
+        package_policy => "add",
+        package_method => gem;
+      "fastercsv"
+        package_policy => "add",
+        package_method => gem;
+      "i18n"
+        package_policy => "add",
+        package_method => gem_versioned,
+        package_version => "0.4.2";
+      "libpq-dev"
+        package_policy => "addupdate",
+        package_method => generic;    
+      "pg"
+        package_policy => "add",
+        package_method => gem;
+      "tzinfo"
+        package_policy => "addupdate",
+        package_method => gem_fuzzy_versioned,
+        package_version => "0.3.31";
+      # retarded requirement, some bug in Redmine most likely as removing ldap in bundler doesn't help
+      "net-ldap"
+        package_policy => "add",
+        package_method => gem;
+
+  vars:
+    any::
+      "url" string => "http://rubyforge.org/frs/download.php/76718/redmine-1.4.7.tar.gz";
+      "target" string => "/tmp/redmine-1.4.7.tar.gz";
+      "instance" slist => getindices("redmine_g.conf");
+
+  methods:
+      "redmine_tarball_is_present" usebundle => redmine_tarball_is_present("$(url)", "$(target)");
+      "redmine_tarball_is_unpacked" usebundle => redmine_tarball_is_unpacked("$(target)", "$(instance)");
+      "redmine_instance_configured" usebundle => redmine_instance_configured("$(instance)");
+      "redmine_install_plugins" usebundle => redmine_install_plugins("$(instance)");
+      "redmine_configure_unicorn" usebundle => redmine_configure_unicorn("$(instance)");
+      "redmine_configure_nginx" usebundle => redmine_configure_nginx("$(instance)");
+}
+
+bundle agent redmine_tarball_is_present(url, target)
+{
+  classes:
+      "redmine_tarball_is_present" expression => fileexists("$(target)");
+
+  commands:
+    !redmine_tarball_is_present::
+      "/usr/bin/wget -q -O $(target) $(url)";
+}
+
+bundle agent redmine_tarball_is_unpacked(tarball, instance)
+{
+  files:
+    "$(redmine_g.conf[$(instance)][root])/."
+      create => "true";
+
+  classes:
+      "redmine_tarball_is_unpacked" expression => fileexists("$(redmine_g.conf[$(instance)][root])/Rakefile");
+
+  commands:
+    !redmine_tarball_is_unpacked::
+      "/bin/tar"
+        args => "zxf $(tarball) -C $(redmine_g.conf[$(instance)][root])/ --strip-components 1";
+}
+
+bundle agent redmine_instance_configured(instance)
+{
+  vars:
+      "root" string => "$(redmine_g.conf[$(instance)][root])";
+      "dbuser" string => "$(redmine_g.conf[$(instance)][username])";
+      "dbpasswd" string => "$(redmine_g.conf[$(instance)][password])";
+
+  databases:
+      "$(redmine_g.conf[$(instance)][database])"
+        database_operation => "create",
+        database_type => "sql",
+        database_server => postgres_master("$(dbuser)", "$(dbpasswd)");
+
+  files:
+      "$(root)/config/database.yml"
+        comment => "All the database settings go into database.yml file.",
+        create => "true",
+        edit_line => redmine_edit_database_yml("$(instance)");
+      "$(root)/config/configuration.yml"
+        comment => "The rest of the settings are in the configuration.yml file.",
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/redmine/configuration.yml", "$(sys.policy_hub)");
+
+  classes:
+      "redmine_configured"
+        comment => "Redmine is considered to be configured when both Bundler and Rake's generate_session_store has been run",
+        and => {
+          fileexists("$(root)/.bundle/config"),
+          fileexists("$(root)/config/initializers/session_store.rb")
+        };
+      "db_user_exists"
+        comment => "Check if the Database user already exists",
+        expression => returnszero("/bin/echo \"SELECT 1 FROM pg_roles WHERE rolname='$(dbuser)'\" |/usr/bin/sudo -u postgres psql -tA | /bin/grep -q 1", "useshell");
+
+  commands:
+    !db_user_exists::
+      "/usr/bin/createuser $(dbuser) --no-superuser --createdb --no-createrole"
+        comment => "Create the Database user for the application",
+        contain => setuid("postgres");
+      "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
+        comment => "Set password for the PostgreSQL user $(dbuser)",
+        contain => setuid_sh("postgres");
+
+    !redmine_configured::
+      "/usr/local/bin/bundle install --gemfile=$(root)/Gemfile --without sqlite mysql test development rmagick openid"
+        comment => "Redmine uses the Ruby Bundler which has to be run once to configure itself, even though dependencies have already been installed by CFEngine";
+      "/usr/local/bin/rake -f $(root)/Rakefile generate_session_store"
+        comment => "Run the generate_session_store command to generate the secret session key for Rails";
+}
+
+bundle edit_line redmine_edit_database_yml(instance)
+{
+  vars:
+      "conf" slist => { "@(redmine_g.conf[$(instance)])" };
+
+  insert_lines:
+      "production:";
+      "  adapter: postgresql";
+      "  database: $(redmine_g.conf[$(instance)][database])";
+      "  host: $(redmine_g.conf[$(instance)][host])";
+      "  username: $(redmine_g.conf[$(instance)][username])";
+      "  password: $(redmine_g.conf[$(instance)][password])";
+      "  encoding: utf8";
+
+  delete_lines:
+      ".*";
+}
+
+bundle agent redmine_install_plugins(instance)
+{
+  methods:
+    "$(instance)_plugins" usebundle => redmine_install_plugins_expand("$(instance)", "@(redmine_g.conf[$(instance)][plugin])");
+}
+
+# A workaround for a stupid limitation of CFEngine3 where it doesn't expand lists that are embedded inside arrays
+bundle agent redmine_install_plugins_expand(instance, plugins)
+{
+  methods:
+    "redmine_install_plugin" usebundle => redmine_install_plugin("$(instance)", "$(plugins)");
+} 
+
+bundle agent redmine_install_plugin(instance, plugin_name)
+{
+  vars:
+    "Rakefile" string => "$(redmine_g.conf[$(instance)][root])/Rakefile";
+  classes:
+    "plugin_installed" expression => fileexists("$(redmine_g.conf[$(instance)][root])/vendor/plugins/$(plugin_name)/.");
+
+  commands:
+    !plugin_installed::
+      "/usr/bin/git clone $(redmine_g.plugin[$(plugin_name)][url]) $(redmine_g.conf[$(instance)][root])/vendor/plugins/$(plugin_name)/";
+      "/usr/local/bin/rake --rakefile $(Rakefile) db:migrate_plugins RAILS_ENV=production";
+}
+
+bundle agent redmine_configure_unicorn(instance)
+{
+  vars:
+      "port" string => "$(redmine_g.conf[$(instance)][port])";
+      "root" string => "$(redmine_g.conf[$(instance)][root])";
+      "pid_file" string => "$(root)/unicorn.pid";
+      "log_file" string => "$(root)/log/unicorn.log";
+
+  files:
+      "/usr/local/etc/unicorn/."
+        create => "true";
+      "/tmp/unicorn.ru.tmpl"
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/unicorn.ru.tmpl", "$(sys.policy_hub)");
+      "/tmp/unicorn.upstart.tmpl"
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/unicorn.upstart.tmpl", "$(sys.policy_hub)");
+      "/usr/local/etc/unicorn/$(instance).ru"
+        create => "true",
+        edit_defaults => empty,
+        edit_line => expand_template("/tmp/unicorn.ru.tmpl"),
+        classes => if_repaired("restart_unicorn");
+      "/etc/init/unicorn_$(instance).conf"
+        create => "true",
+        edit_defaults => empty,
+        edit_line => expand_template("/tmp/unicorn.upstart.tmpl"),
+        classes => if_repaired("restart_unicorn");
+
+  commands:
+    restart_unicorn.!no_restarts::
+        "/usr/sbin/service unicorn_$(instance) restart";
+}
+
+bundle agent redmine_configure_nginx(instance)
+{
+  vars:
+      "name" string => "$(instance)";
+      "root" string => "$(redmine_g.conf[$(instance)][root])";
+      "fastcgi_pass" string => "unix:$(root)/dispatch.sock";
+      "server_name" string => "$(instance).$(def.domain)";
+      "upstream_servers" string => "127.0.0.1:$(redmine_g.conf[$(instance)][port])";
+
+  files:
+      "/tmp/nginx_site.tmpl"
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/redmine_site.tmpl", "$(sys.policy_hub)");
+      "/etc/nginx/sites-available/$(instance)"
+        create => "true",
+        edit_defaults => empty,
+        edit_line => expand_template("/tmp/nginx_site.tmpl"),
+        classes => if_repaired("restart_nginx");
+      "/etc/nginx/sites-enabled/$(instance)"
+        link_from => ln_s("/etc/nginx/sites-available/$(instance)"),
+        classes => if_repaired("restart_nginx");
+
+  commands:
+    reload_nginx::
+      "/usr/sbin/service nginx reload";
+}
