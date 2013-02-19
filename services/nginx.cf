@@ -1,6 +1,5 @@
 bundle agent nginx
 {
   packages:
-    web_server::
       "nginx" package_policy => "addupdate";
 }

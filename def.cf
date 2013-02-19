@@ -41,11 +41,4 @@ bundle common def
    "dir_modules"     string => translatepath("$(sys.workdir)/modules"),
                     comment => "Define modules path",
                      handle => "common_def_vars_dir_modules";
-
-  classes:
-      "database_master" or => { classify("ubuntu") };
-      "web_server" or => { classify("ubuntu") };
-      "rails_app_server" or => { classify("ubuntu") };
-      "redmine_app_server" or => { classify("ubuntu") };
-      "redmine_akronet" or => { classify("ubuntu") };
 }

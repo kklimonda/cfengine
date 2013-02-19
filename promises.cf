@@ -1,15 +1,49 @@
+bundle common classes
+{
+  classes:
+      "database_master" or => { classify("ubuntu") };
+      "web_server" or => { classify("ubuntu") };
+      "rails_app_server" or => { classify("ubuntu") };
+      "redmine_app_server" or => { classify("ubuntu") };
+      "redmine_akronet" or => { classify("ubuntu") };
+      "git_server" or => { classify("ubuntu") };
+}
+
+bundle common g
+{
+  vars:
+    any::
+      "bseq" slist => {
+        "cfengine_repo",
+        "corepackages",
+        "configfiles"
+      }, policy => "free";
+    web_server::
+      "bseq" slist => {
+        @{bseq},
+        "nginx"
+      }, policy => "free";
+    database_master::
+      "bseq" slist => {
+        @{bseq},
+        "postgres"
+      }, policy => "free";
+    redmine_app_server::
+      "bseq" slist => {
+        @{bseq},
+        "redmine"
+      }, policy => "free";
+    git_server::
+      "bseq" slist => {
+        @{bseq},
+        "gitolite"
+      }, policy => "free";
+}
 
 body common control
 { 
   any::
-      bundlesequence => {
-        "cfengine_repo",
-        "corepackages",
-        "configfiles",
-        "postgres",
-        "nginx",
-        "redmine"
-      };
+      bundlesequence => { "@(g.bseq)" };
 
       inputs => {
           # Global common bundles
