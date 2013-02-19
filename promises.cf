@@ -114,6 +114,9 @@ bundle agent corepackages
       "gcc"
         package_policy => "addupdate",
         package_method => generic;
+      "make"
+        package_policy => "addupdate",
+        package_method => generic;
       "ruby1.9.1"
         package_policy => "addupdate",
         package_method => generic;
