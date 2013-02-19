@@ -1,6 +1,9 @@
-bundle common redmine_g
-{ 
+bundle common redmine_g { 
   vars:
+    any::
+      "url" string => "http://rubyforge.org/frs/download.php/76718/redmine-1.4.7.tar.gz";
+      "target" string => "/tmp/redmine-1.4.7.tar.gz";
+
     redmine_akronet::
       "conf[akronet][adapter]" string => "postgresql";
       "conf[akronet][host]" string => "localhost";
@@ -62,30 +65,28 @@ bundle agent redmine
 
   vars:
     any::
-      "url" string => "http://rubyforge.org/frs/download.php/76718/redmine-1.4.7.tar.gz";
-      "target" string => "/tmp/redmine-1.4.7.tar.gz";
       "instance" slist => getindices("redmine_g.conf");
 
   methods:
-      "redmine_tarball_is_present" usebundle => redmine_tarball_is_present("$(url)", "$(target)");
-      "redmine_tarball_is_unpacked" usebundle => redmine_tarball_is_unpacked("$(target)", "$(instance)");
+      "redmine_tarball_is_present" usebundle => redmine_tarball_is_present;
+      "redmine_tarball_is_unpacked" usebundle => redmine_tarball_is_unpacked("$(instance)");
       "redmine_instance_configured" usebundle => redmine_instance_configured("$(instance)");
       "redmine_install_plugins" usebundle => redmine_install_plugins("$(instance)");
       "redmine_configure_unicorn" usebundle => redmine_configure_unicorn("$(instance)");
       "redmine_configure_nginx" usebundle => redmine_configure_nginx("$(instance)");
 }
 
-bundle agent redmine_tarball_is_present(url, target)
+bundle agent redmine_tarball_is_present
 {
   classes:
-      "redmine_tarball_is_present" expression => fileexists("$(target)");
+      "redmine_tarball_is_present" expression => fileexists("$(redmine_g.target)");
 
   commands:
     !redmine_tarball_is_present::
-      "/usr/bin/wget -q -O $(target) $(url)";
+      "/usr/bin/wget -q -O $(redmine_g.target) $(redmine_g.url)";
 }
 
-bundle agent redmine_tarball_is_unpacked(tarball, instance)
+bundle agent redmine_tarball_is_unpacked(instance)
 {
   files:
     "$(redmine_g.conf[$(instance)][root])/."
@@ -97,7 +98,7 @@ bundle agent redmine_tarball_is_unpacked(tarball, instance)
   commands:
     !redmine_tarball_is_unpacked::
       "/bin/tar"
-        args => "zxf $(tarball) -C $(redmine_g.conf[$(instance)][root])/ --strip-components 1";
+        args => "zxf $(redmine_g.target) -C $(redmine_g.conf[$(instance)][root])/ --strip-components 1";
 }
 
 bundle agent redmine_instance_configured(instance)
@@ -141,7 +142,6 @@ bundle agent redmine_instance_configured(instance)
       "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
         comment => "Set password for the PostgreSQL user $(dbuser)",
         contain => setuid_sh("postgres");
-
     !redmine_configured::
       "/usr/local/bin/bundle install --gemfile=$(root)/Gemfile --without sqlite mysql test development rmagick openid"
         comment => "Redmine uses the Ruby Bundler which has to be run once to configure itself, even though dependencies have already been installed by CFEngine";
