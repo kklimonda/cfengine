@@ -23,9 +23,8 @@ bundle common def
                 # Assume /16 LAN clients to start with
                    "$(sys.policy_hub)/16", 
 
-                 #  "2001:700:700:3.*", 
-                 #  "217.77.34.18", 
-                 #  "217.77.34.19",
+                # external IP for the synth.pl droplet
+                   "192.81.223.120"
                    },
        comment => "Define an acl for the machines to be granted accesses",
         handle => "common_def_vars_acl";
