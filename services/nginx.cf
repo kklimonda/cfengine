@@ -2,4 +2,12 @@ bundle agent nginx
 {
   packages:
       "nginx" package_policy => "addupdate";
+
+  processes:
+      "nginx: master"
+        restart_class => "restart_nginx";
+
+  commands:
+    restart_nginx::
+      "/usr/sbin/service nginx restart";
 }
