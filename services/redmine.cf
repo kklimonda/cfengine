@@ -70,6 +70,7 @@ bundle agent redmine
   methods:
       "redmine_tarball_is_present" usebundle => redmine_tarball_is_present;
       "redmine_tarball_is_unpacked" usebundle => redmine_tarball_is_unpacked("$(instance)");
+      "redmine_create_dabase" usebundle => redmine_create_database("$(instance)");
       "redmine_instance_configured" usebundle => redmine_instance_configured("$(instance)");
       "redmine_install_plugins" usebundle => redmine_install_plugins("$(instance)");
       "redmine_configure_unicorn" usebundle => redmine_configure_unicorn("$(instance)");
@@ -101,12 +102,12 @@ bundle agent redmine_tarball_is_unpacked(instance)
         args => "zxf $(redmine_g.target) -C $(redmine_g.conf[$(instance)][root])/ --strip-components 1";
 }
 
-bundle agent redmine_instance_configured(instance)
+bundle agent redmine_create_database(instance)
 {
   vars:
-      "root" string => "$(redmine_g.conf[$(instance)][root])";
       "dbuser" string => "$(redmine_g.conf[$(instance)][username])";
       "dbpasswd" string => "$(redmine_g.conf[$(instance)][password])";
+      "dbname" string => "$(redmine_g.conf[$(instance)][database])";
 
   databases:
       "$(redmine_g.conf[$(instance)][database])"
@@ -114,7 +115,29 @@ bundle agent redmine_instance_configured(instance)
         database_type => "sql",
         database_server => postgres_master("$(dbuser)", "$(dbpasswd)");
 
+  classes:
+      "db_user_exists"
+        comment => "Check if the Database user already exists",
+        expression => returnszero("/bin/echo \"SELECT 1 FROM pg_roles WHERE rolname='$(dbuser)'\" |/usr/bin/sudo -u postgres psql -tA | /bin/grep -q 1", "useshell");
+
+  commands:
+    !db_user_exists::
+      "/usr/bin/createuser $(dbuser) --no-superuser --createdb --no-createrole"
+        comment => "Create the Database user for the application",
+        contain => setuid("postgres");
+      "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
+        comment => "Set password for the PostgreSQL user $(dbuser)",
+        contain => setuid_sh("postgres");
+}
+
+bundle agent redmine_instance_configured(instance)
+{
+  vars:
+      "root" string => "$(redmine_g.conf[$(instance)][root])";
+
   files:
+      "$(root)/lib/tasks/absolute_migrate.rake"
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/redmine/absolute_migrate.rake", "$(sys.policy_hub)");
       "$(root)/config/database.yml"
         comment => "All the database settings go into database.yml file.",
         create => "true",
@@ -130,23 +153,15 @@ bundle agent redmine_instance_configured(instance)
           fileexists("$(root)/.bundle/config"),
           fileexists("$(root)/config/initializers/session_store.rb")
         };
-      "db_user_exists"
-        comment => "Check if the Database user already exists",
-        expression => returnszero("/bin/echo \"SELECT 1 FROM pg_roles WHERE rolname='$(dbuser)'\" |/usr/bin/sudo -u postgres psql -tA | /bin/grep -q 1", "useshell");
 
   commands:
-    !db_user_exists::
-      "/usr/bin/createuser $(dbuser) --no-superuser --createdb --no-createrole"
-        comment => "Create the Database user for the application",
-        contain => setuid("postgres");
-      "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
-        comment => "Set password for the PostgreSQL user $(dbuser)",
-        contain => setuid_sh("postgres");
     !redmine_configured::
       "/usr/local/bin/bundle install --gemfile=$(root)/Gemfile --without sqlite mysql test development rmagick openid"
         comment => "Redmine uses the Ruby Bundler which has to be run once to configure itself, even though dependencies have already been installed by CFEngine";
       "/usr/local/bin/rake -f $(root)/Rakefile generate_session_store"
         comment => "Run the generate_session_store command to generate the secret session key for Rails";
+      "/usr/local/bin/rake -f $(root)/Rakefile db:absolute_migrate RAILS_ENV=production"
+        comment => "Create the database structure, but only after database have already been created";
 }
 
 bundle edit_line redmine_edit_database_yml(instance)
