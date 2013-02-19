@@ -51,3 +51,24 @@ body package_method gem_fuzzy_versioned
   package_delete_convention => "$(name) -v '$(version)'";
   package_name_convention => "$(name) -v '~> $(version)'";
 }
+
+bundle agent ruby_fix_gems_perms
+{
+  files:
+      "/var/lib/gems"
+        perms => m("0644"),
+        depth_search => recurse_include_base("inf"),
+        action => immediate;
+      "/var/lib/gems"
+        perms => m("0755"),
+        file_select => dirs,
+        depth_search => recurse_include_base("inf"),
+        action => immediate;
+}
+
+body depth_search recurse_include_base(d)
+{
+  depth => "$(d)";
+  xdev  => "true";
+  include_basedir => "true";
+}

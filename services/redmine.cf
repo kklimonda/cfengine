@@ -68,6 +68,7 @@ bundle agent redmine
       "instance" slist => getindices("redmine_g.conf");
 
   methods:
+      "fix_gem_perms" usebundle => ruby_fix_gems_perms;
       "redmine_tarball_is_present" usebundle => redmine_tarball_is_present;
       "redmine_tarball_is_unpacked" usebundle => redmine_tarball_is_unpacked("$(instance)");
       "redmine_create_dabase" usebundle => redmine_create_database("$(instance)");
@@ -246,9 +247,14 @@ bundle agent redmine_configure_unicorn(instance)
         edit_line => expand_template("/tmp/unicorn.upstart.tmpl"),
         classes => if_repaired("restart_unicorn");
 
+  methods:
+    "fix_gem_perms" usebundle => ruby_fix_gems_perms,
+      handle => "fix_gem_perms";
+
   commands:
     restart_unicorn.!no_restarts::
-        "/usr/sbin/service unicorn_$(instance) restart";
+        "/usr/sbin/service unicorn_$(instance) restart",
+          depends_on => { "fix_gem_perms" };
 }
 
 bundle agent redmine_configure_nginx(instance)

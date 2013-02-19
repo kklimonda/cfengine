@@ -62,8 +62,8 @@ body common control
             "controls/cf_serverd.cf",
 
           # CFEngine3 Standard Library
-            "libraries/ruby.cf",
             "libraries/cfengine_stdlib.cf",
+            "libraries/library.cf",
 
             "services/gitolite.cf",
             "services/postgres.cf",
