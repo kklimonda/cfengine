@@ -18,11 +18,6 @@ body agent control
 
   ifelapsed => "1";
 
- # Do not send IP/name during server connection if address resolution is broken.
- # Comment it out if you do NOT have a problem with DNS
-
-  skipidentify => "true";
-
  # Environment variables based on Distro
 
  debian::
