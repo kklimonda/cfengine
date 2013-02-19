@@ -119,13 +119,16 @@ bundle agent redmine_create_database(instance)
       "db_user_exists"
         comment => "Check if the Database user already exists",
         expression => returnszero("/bin/echo \"SELECT 1 FROM pg_roles WHERE rolname='$(dbuser)'\" |/usr/bin/sudo -u postgres psql -tA | /bin/grep -q 1", "useshell");
+      "password_changed"
+        comment => "Check if the password should be updated",
+        not => returnszero("/bin/echo \"SELECT 1;\"| /usr/bin/env PGPASSWORD=\"$(dbpasswd)\" psql -U $(dbuser) $(dbname) > /dev/null 2>&1", "useshell");
 
   commands:
     !db_user_exists::
       "/usr/bin/createuser $(dbuser) --no-superuser --createdb --no-createrole"
         comment => "Create the Database user for the application",
         contain => setuid("postgres");
-    any::
+    password_changed::
       "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
         comment => "Set password for the PostgreSQL user $(dbuser)",
         contain => setuid_sh("postgres");
