@@ -125,6 +125,7 @@ bundle agent redmine_create_database(instance)
       "/usr/bin/createuser $(dbuser) --no-superuser --createdb --no-createrole"
         comment => "Create the Database user for the application",
         contain => setuid("postgres");
+    any::
       "/bin/echo \"ALTER USER $(dbuser) with encrypted password '$(dbpasswd)'\" | /usr/bin/psql template1"
         comment => "Set password for the PostgreSQL user $(dbuser)",
         contain => setuid_sh("postgres");
