@@ -14,6 +14,7 @@ bundle common g
   vars:
     any::
       "bseq" slist => {
+        "manage_users",
         "cfengine_repo",
         "corepackages",
         "configfiles"
@@ -174,6 +175,35 @@ bundle agent edit_sshd
         "/usr/sbin/service ssh reload"
         handle => "sshd_restart",
         comment => "Restart the SSH daemon if the configuration changes";
+}
+
+bundle agent manage_users
+{
+  vars:
+      "users[kklimonda][fullname]" string => "Krzysztof Klimonda";
+      "users[kklimonda][shell]" string => "/bin/bash";
+      "users[kklimonda][flags]" string => "-m";
+      "users[kklimonda][passwd_hash]" string => "$(private_g.password[shadow_kklimonda])";
+
+  methods:
+      "users" usebundle => create_users("manage_users.users");
+}
+
+bundle agent create_users(list)
+{
+  vars:
+      "user" slist => getindices("$(list)");
+
+  classes:
+      "add_$(user)" not => userexists("$(user)");
+
+  commands:
+      "/usr/sbin/useradd $($(list)[$(user)][flags]) -s $($(list)[$(user)][shell]) -c '$($(list)[$(user)][fullname])' $(user)"
+        ifvarclass => "add_$(user)";
+
+  files:
+      "/etc/shadow"
+        edit_line => set_user_field("$(user)", 2, "$($(list)[$(user)][passwd_hash])");
 }
 
 bundle edit_line edit_apt_config
