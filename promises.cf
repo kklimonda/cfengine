@@ -111,6 +111,9 @@ bundle agent corepackages
     any::
       "$(pkglist)" package_policy => "addupdate";
     rails_app_server::
+      "gcc"
+        package_policy => "addupdate",
+        package_method => generic;
       "ruby1.9.1"
         package_policy => "addupdate",
         package_method => generic;
