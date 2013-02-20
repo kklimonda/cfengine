@@ -92,7 +92,14 @@ bundle agent redmine_tarball_is_unpacked(instance)
 {
   files:
     "$(redmine_g.conf[$(instance)][root])/."
-      create => "true";
+        perms => mog("0644", "www-data", "www-data"),
+        depth_search => recurse_include_base("inf"),
+        action => immediate;
+    "$(redmine_g.conf[$(instance)][root])/."
+        perms => mog("0755", "www-data", "www-data"),
+        file_select => dirs,
+        depth_search => recurse_include_base("inf"),
+        action => immediate;
 
   classes:
       "redmine_tarball_is_unpacked" expression => fileexists("$(redmine_g.conf[$(instance)][root])/Rakefile");
