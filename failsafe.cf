@@ -158,6 +158,8 @@ body copy_from u_scp(from)
 source      => "$(from)";
 compare     => "digest";
 trustkey    => "true";
+encrypt     => "true";
+verify      => "true";
 !am_policy_hub::
 servers => { "$(sys.policy_hub)" };
 }
