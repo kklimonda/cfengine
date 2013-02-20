@@ -154,8 +154,9 @@ bundle agent configfiles
 
       "sshd[Protocol]" string => "2";
       "sshd[X11Forwarding]" string => "no";
-      "sshd[UseDNS]" string => "no";
       "sshd[PermitRootLogin]" string => "no";
+    !ubuntu_10_4::
+      "sshd[UseDNS]" string => "no";
 
 
   files:
