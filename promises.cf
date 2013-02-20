@@ -45,6 +45,17 @@ bundle common g
         @{bseq},
         "gitolite"
       }, policy => "free";
+    almond::
+      "bseq" slist => {
+        @{bseq},
+        "create_akronet_sql_dump"
+      }, policy => "free";
+    synth_pl::
+      "bseq" slist => {
+        @{bseq},
+        "restore_akronet_sql_dump",
+        "sync_uploaded_files"
+      }, policy => "free";
 }
 
 body common control
@@ -220,6 +231,60 @@ bundle agent manage_users
 
   methods:
       "users" usebundle => create_users("manage_users.users");
+}
+
+bundle agent restore_akronet_sql_dump
+{
+  vars:
+    "almond_host" string => "syntaxhighlighted.com";
+
+  files:
+    Min15::
+      "/tmp/akronet.sql"
+        copy_from => secure_cp("/tmp/akronet.sql", "$(almond_host)"),
+        perms => mo("0600", "postgres"),
+        classes => if_repaired("sql_dump_updated");
+
+  commands:
+    sql_dump_updated::
+      "/usr/sbin/service" args => "unicorn_akronet stop";
+      "/usr/bin/dropdb" args => "redmine_akronet_production",
+        contain => setuid("postgres");
+      "/usr/bin/createdb" args => "redmine_akronet_production",
+        contain => setuid("postgres");
+      "/usr/bin/psql" args => "-f /tmp/akronet.sql redmine_akronet_production",
+        contain => setuid("postgres");
+      "/usr/local/bin/rake RAILS_ENV=production" args => "-f /srv/akronet.synth.pl/Rakefile db:absolute_migrate";
+      "/usr/local/bin/rake RAILS_ENV=production" args => "-f /srv/akronet.synth.pl/Rakefile db:migrate_plugins";
+      "/usr/sbin/service" args => "unicorn_akronet start";
+}
+
+bundle agent sync_uploaded_files
+{
+  vars:
+    "almond_host" string => "syntaxhighlighted.com";
+
+  files:
+    Min15::
+      "/srv/akronet.synth.pl/files"
+        copy_from => secure_cp("/var/lib/redmine/akronet/files/", "$(almond_host)"),
+        perms => mo("0640", "www-data"),
+        depth_search => recurse("inf"),
+        action => immediate;
+}
+
+bundle agent create_akronet_sql_dump
+{
+  files:
+    sql_dump_created::
+      "/tmp/akronet.sql"
+        perms => mog("0660", "kklimonda", "postgres");
+
+  commands:
+    Min05::
+      "/usr/bin/pg_dump" args => "-c -f /tmp/akronet.sql redmine_akronet_production",
+        contain => setuid("postgres"),
+        classes => if_repaired("sql_dump_created");
 }
 
 bundle agent create_users(list)

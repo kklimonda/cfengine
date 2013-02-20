@@ -47,6 +47,14 @@ bundle server access_rules()
       comment => "Grant access to modules directory",
       admit   => { ".*$(def.domain)", @(def.acl) };
 
+  almond::
+    "/tmp/akronet.sql"
+      comment => "akronet SQL dump on the almond host",
+      admit   => { ".*$(def.domain)", @(def.acl) };
+    "/var/lib/redmine/akronet/files/"
+      comment => "Files uploaded to the Redmine",
+      admit   => { ".*$(def.domain)", @(def.acl) };
+
 # Uncomment the promise below to allow cf-runagent to
 # access cf-agent on Windows machines
 #       
