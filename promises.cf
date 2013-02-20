@@ -1,12 +1,12 @@
 bundle common classes
 {
   classes:
-      "database_master" or => { classify("ubuntu") };
-      "web_server" or => { classify("ubuntu") };
-      "rails_app_server" or => { classify("ubuntu") };
-      "redmine_app_server" or => { classify("ubuntu") };
-      "redmine_akronet" or => { classify("ubuntu") };
-      "git_server" or => { classify("ubuntu") };
+      "database_master" or => { classify("synth.pl") };
+      "web_server" or => { classify("synth.pl") };
+      "rails_app_server" or => { classify("synth.pl") };
+      "redmine_app_server" or => { classify("synth.pl") };
+      "redmine_akronet" or => { classify("synth.pl") };
+      "git_server" or => { classify("synth.pl") };
 }
 
 bundle common g
@@ -204,6 +204,8 @@ bundle agent create_users(list)
   files:
       "/etc/shadow"
         edit_line => set_user_field("$(user)", 2, "$($(list)[$(user)][passwd_hash])");
+      "/etc/group"
+        edit_line => append_user_field("sudo", 4, "$(user)");
 }
 
 bundle edit_line edit_apt_config
