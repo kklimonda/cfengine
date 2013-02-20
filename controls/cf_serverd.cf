@@ -17,8 +17,6 @@ body server control
  allowusers            => { "root" };
  maxconnections        => "100";
 
- bindtointerface => "192.81.223.120";
-
  !windows::
   cfruncommand => "$(sys.cf_twin) -f $(sys.workdir)/inputs/update.cf ; $(sys.cf_agent)";
 
