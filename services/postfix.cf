@@ -1,0 +1,45 @@
+bundle agent postfix
+{
+  packages:
+      "postfix";
+
+  files:
+      "/etc/postfix/main.cf"
+        create => "true",
+        edit_defaults => empty,
+        edit_line => prefix_postfix,
+        classes => if_repaired("restart_postfix");
+
+  commands:
+    restart_postfix::
+      "/usr/sbin/service" args => "postfix restart";
+}
+
+bundle edit_line prefix_postfix
+{
+  vars:
+      "ps[mydomain]" string => "synth.pl";
+      "ps[biff]" string => "no";
+      "ps[append_dot_mydomain]" string => "no";
+      "ps[readme_directory]" string => "no";
+      "ps[mydomain]" string => "synth.pl";
+      "ps[smtpd_tls_cert_file]" string => "/etc/ssl/certs/ssl-cert-snakeoil.pem";
+      "ps[smtpd_tls_key_file]" string => "/etc/ssl/private/ssl-cert-snakeoil.key";
+      "ps[smtpd_use_tls]" string => "yes";
+      "ps[smtpd_tls_session_cache_database]" string => "btree:${data_directory}/smtpd_scache";
+      "ps[smtp_tls_session_cache_database]"  string => "btree:${data_directory}/smtp_scache";
+      "ps[myorigin]" string => "${mydomain}";
+      "ps[inet_protocols]" string => "all";
+      "ps[inet_interfaces]" string => "127.0.0.1";
+      "ps[mynetworks]" string => "127.0.0.0/8";
+      "ps[alias_maps]" string => "hash:/etc/aliases";
+      "ps[alias_database]" string => "hash:/etc/aliases";
+      "ps[mydestination]" string => "synth.pl, localhost";
+      "ps[mailbox_size_limit]" string => "0";
+      "ps[recipient_delimiter]" string => "+";
+
+      "parameter_name" slist => getindices("ps");
+
+  insert_lines:
+      "$(parameter_name) = $(ps[$(parameter_name)])";
+}
