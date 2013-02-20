@@ -156,6 +156,7 @@ bundle agent configfiles
 
   methods:
       "sshd" usebundle => edit_sshd;
+      "hosts" usebundle => edit_hosts_file;
 }
 
 bundle agent edit_sshd
@@ -175,6 +176,30 @@ bundle agent edit_sshd
         "/usr/sbin/service ssh reload"
         handle => "sshd_restart",
         comment => "Restart the SSH daemon if the configuration changes";
+}
+
+bundle agent edit_hosts_file
+{
+  vars:
+      "template" string =>
+"# IP-Address    FQDN            Hostname
+127.0.0.1       localhost
+::1             ip6-localhost   ip6-loopback
+fe00::0         ip6-localnet    
+ff00::0         ip6-mcastprefix
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+192.81.223.120  synth.pl        synth
+";
+
+  files:
+      "/etc/hosts"
+        comment => "Define a static list of hosts from the template",
+        create => "true",
+        edit_defaults => empty,
+        edit_line => append_if_no_lines("$(template)"),
+        perms => mo("0644", "root"),
+        action => if_elapsed("60");
 }
 
 bundle agent manage_users
