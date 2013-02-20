@@ -176,6 +176,8 @@ bundle agent configfiles
   methods:
       "sshd" usebundle => edit_sshd;
       "hosts" usebundle => edit_hosts_file;
+    !almond::
+      "aliases" usebundle => edit_aliases_file;
 }
 
 bundle agent edit_sshd
@@ -195,6 +197,13 @@ bundle agent edit_sshd
         "/usr/sbin/service ssh reload"
         handle => "sshd_restart",
         comment => "Restart the SSH daemon if the configuration changes";
+}
+
+bundle agent edit_aliases_file
+{
+  files:
+      "/etc/aliases"
+        edit_line => append_if_no_line("root: kklimonda");
 }
 
 bundle agent edit_hosts_file
