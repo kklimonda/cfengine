@@ -168,12 +168,15 @@ bundle agent redmine_instance_configured(instance)
 
   commands:
     !redmine_configured::
-      "/usr/local/bin/bundle install --gemfile=$(root)/Gemfile --without sqlite mysql test development rmagick openid"
-        comment => "Redmine uses the Ruby Bundler which has to be run once to configure itself, even though dependencies have already been installed by CFEngine";
-      "/usr/local/bin/rake -f $(root)/Rakefile generate_session_store"
-        comment => "Run the generate_session_store command to generate the secret session key for Rails";
-      "/usr/local/bin/rake -f $(root)/Rakefile db:absolute_migrate RAILS_ENV=production"
-        comment => "Create the database structure, but only after database have already been created";
+      "/usr/local/bin/bundle" args => "install --without sqlite mysql test development rmagick openid",
+        comment => "Run Bundler once to configure it",
+        contain => in_dir("$(root)");
+      "/usr/local/bin/rake" args => "generate_session_store",
+        comment => "Run the generate_session_store command to generate the secret session key for Rails",
+        contain => in_dir("$(root)");
+      "/usr/local/bin/rake RAILS_ENV=production" args => "db:migrate",
+        comment => "Create the database structure, but only after database have already been created",
+        contain => in_dir("$(root)");
 }
 
 bundle edit_line redmine_edit_database_yml(instance)
@@ -210,14 +213,17 @@ bundle agent redmine_install_plugins_expand(instance, plugins)
 bundle agent redmine_install_plugin(instance, plugin_name)
 {
   vars:
-    "Rakefile" string => "$(redmine_g.conf[$(instance)][root])/Rakefile";
+    "root" string => "$(redmine_g.conf[$(instance)][root])";
+
   classes:
-    "plugin_installed" expression => fileexists("$(redmine_g.conf[$(instance)][root])/vendor/plugins/$(plugin_name)/.");
+    "plugin_installed" expression => fileexists("$(root)/vendor/plugins/$(plugin_name)/.");
 
   commands:
     !plugin_installed::
-      "/usr/bin/git clone $(redmine_g.plugin[$(plugin_name)][url]) $(redmine_g.conf[$(instance)][root])/vendor/plugins/$(plugin_name)/";
-      "/usr/local/bin/rake --rakefile $(Rakefile) db:migrate_plugins RAILS_ENV=production";
+      "/usr/bin/git clone $(redmine_g.plugin[$(plugin_name)][url])",
+        contain => in_dir("$(root)/vendor/plugins/");
+      "/usr/local/bin/rake RAILS_ENV=production" args => "db:migrate_plugins",
+        contain => in_dir("$(root)");
 }
 
 bundle agent redmine_configure_unicorn(instance)
