@@ -158,13 +158,13 @@ bundle agent configfiles
     !ubuntu_10_4::
       "sshd[UseDNS]" string => "no";
 
-
   files:
       "/etc/apt/apt.conf.d/."
         create => "true";
       
       "/etc/apt/apt.conf.d/20recommends"
         create => "true",
+        perms => m("0644"),
         handle => "apt_config",
         comment => "Disable Recomendation and Suggestion installation in Apt",
         edit_line => edit_apt_config;
