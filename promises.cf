@@ -241,6 +241,11 @@ bundle agent manage_users
       "users[kklimonda][shell]" string => "/bin/bash";
       "users[kklimonda][flags]" string => "-m";
       "users[kklimonda][passwd_hash]" string => "$(private_g.password[shadow_kklimonda])";
+    synth_pl::
+      "users[thorin][fullname]" string => "Grzegorz Wolaniuk";
+      "users[thorin][shell]" string => "/bin/bash";
+      "users[thorin][flags]" string => "-m";
+      "users[thorin][passwd_hash]" string => "$(private_g.password[shadow_thorin])";
 
   methods:
       "users" usebundle => create_users("manage_users.users");
