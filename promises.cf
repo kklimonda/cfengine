@@ -145,6 +145,9 @@ bundle agent corepackages
       "ruby1.9.1-dev"
         package_policy => "addupdate",
         package_method => generic;
+    synth_pl::
+      "ekg"
+        package_policy => "addupdate";
 }
 
 bundle agent configfiles
