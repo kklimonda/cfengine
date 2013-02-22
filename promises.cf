@@ -201,7 +201,12 @@ bundle agent edit_aliases_file
 {
   files:
       "/etc/aliases"
-        edit_line => append_if_no_line("root: kklimonda");
+        edit_line => append_if_no_line("root: kklimonda"),
+        classes => if_repaired("newaliases");
+
+  commands:
+    newaliases::
+      "/usr/bin/newaliases";
 }
 
 bundle agent edit_hosts_file
