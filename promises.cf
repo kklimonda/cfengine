@@ -137,6 +137,12 @@ bundle agent corepackages
     synth_pl::
       "ekg"
         package_policy => "addupdate";
+
+  files:
+    rails_app_server::
+      "/var/lib/gems/expanded_gem_list.sh"
+        perms => m("0755"),
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/expanded_gem_list.sh", "$(sys.policy_hub)");
 }
 
 bundle agent configfiles

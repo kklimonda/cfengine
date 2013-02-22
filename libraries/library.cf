@@ -2,13 +2,13 @@ body package_method gem
 {
   package_changes => "bulk";
 
-  package_list_command => "/usr/bin/gem list";
+  package_list_command => "/var/lib/gems/expanded_gem_list.sh";
 
   package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install ";
+  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -I -a -x ";
   package_update_command => "/usr/bin/gem update ";
 
@@ -20,13 +20,13 @@ body package_method gem_versioned
 {
   package_changes => "individual";
 
-  package_list_command => "/usr/bin/gem list";
+  package_list_command => "/var/lib/gems/expanded_gem_list.sh";
 
   package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install ";
+  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem install ";
 
@@ -44,7 +44,7 @@ body package_method gem_fuzzy_versioned
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install ";
+  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem install ";
 
