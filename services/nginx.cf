@@ -1,11 +1,34 @@
 bundle agent nginx
 {
+  vars:
+    "redirect_server_stanza" string =>
+"server {
+    listen 80;
+    server_name  akronet.syntaxhighlighted.com;
+    rewrite ^(.*)$ http://akronet.synth.pl$1 permanent;
+}
+";
+
   packages:
       "nginx" package_policy => "addupdate";
 
   processes:
       "nginx: master"
         restart_class => "restart_nginx";
+
+  files:
+      "/etc/nginx/nginx.conf"
+        edit_line => uncomment_lines_matching(".*server_names_hash_bucket_size.*", "#");
+    synth_pl::
+      "/etc/nginx/sites-enabled/akronet_redirect",
+        link_from => ln_s("/etc/nginx/sites-available/akronet_redirect"),
+        classes => if_repaired("restart_nginx");
+      "/etc/nginx/sites-available/akronet_redirect"
+        perms => m("0644"),
+        create => "true",
+        edit_defaults => empty,
+        edit_line => insert_lines("$(redirect_server_stanza)"),
+        classes => if_repaired("restart_nginx");
 
   commands:
     restart_nginx::
