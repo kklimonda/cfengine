@@ -32,9 +32,9 @@ bundle agent redmine
 {
   packages:
       "rails"
-        package_policy => "add",
-        package_method => gem_versioned,
-        package_version => "2.3.15";
+        package_policy => "addupdate",
+        package_method => gem_fuzzy_versioned,
+        package_version => "2.3.16";
       "bundler"
         package_policy => "add",
         package_method => gem;  
@@ -148,6 +148,9 @@ bundle agent redmine_instance_configured(instance)
       "root" string => "$(redmine_g.conf[$(instance)][root])";
 
   files:
+      "$(root)/Gemfile"
+        edit_line => replace_or_add("^gem \"rails\", \"2.3.15\"", "gem \"rails\", \"~> 2.3.16\""),
+        classes => if_repaired("gemfile_updated");
       "$(root)/lib/tasks/absolute_migrate.rake"
         copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/redmine/absolute_migrate.rake", "$(sys.policy_hub)");
       "$(root)/config/database.yml"
@@ -167,10 +170,13 @@ bundle agent redmine_instance_configured(instance)
         };
 
   commands:
-    !redmine_configured::
+    !redmine_configured||gemfile_updated::
       "/usr/local/bin/bundle" args => "install --without sqlite mysql test development rmagick openid",
         comment => "Run Bundler once to configure it",
         contain => in_dir("$(root)");
+    redmine_configured&gemfile_updated::
+      "/usr/sbin/service" args => "unicorn_akronet restart";
+    !redmine_configured::
       "/usr/local/bin/rake" args => "generate_session_store",
         comment => "Run the generate_session_store command to generate the secret session key for Rails",
         contain => in_dir("$(root)");
