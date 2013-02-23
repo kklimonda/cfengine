@@ -3,6 +3,7 @@ bundle common hosts
   vars:
       "synth" string => host2ip("synth");
 }
+
 bundle common classes
 {
   classes:
@@ -52,40 +53,38 @@ body common control
       bundlesequence => { "@(g.bseq)" };
 
       inputs => {
-          # Global common bundles
-            "def.cf",
+        # Global common bundles
+          "def.cf",
+        # Private data (passwords), not to be shared with anyone
+          "private.cf",
+        # Control body for agents
+          "controls/cf_agent.cf",
+          "controls/cf_execd.cf",
+          "controls/cf_monitord.cf",
+          "controls/cf_report.cf",
+          "controls/cf_runagent.cf",
+          "controls/cf_serverd.cf",
+        # CFEngine3 Standard Library
+          "libraries/cfengine_stdlib.cf",
+          "libraries/library.cf",
 
-          # Private data (passwords), not to be shared with anyone
-            "private.cf",
+          "services/postfix.cf",
+          "services/postgres.cf",
+          "services/redmine.cf",
+          "services/nginx.cf",
+      };
 
-          # Control body for agents
-            "controls/cf_agent.cf",
-            "controls/cf_execd.cf",
-            "controls/cf_monitord.cf",
-            "controls/cf_report.cf",
-            "controls/cf_runagent.cf",
-            "controls/cf_serverd.cf",
-
-          # CFEngine3 Standard Library
-            "libraries/cfengine_stdlib.cf",
-            "libraries/library.cf",
-
-            "services/postfix.cf",
-            "services/postgres.cf",
-            "services/redmine.cf",
-            "services/nginx.cf",
-          };
-
-      version => "0.1";
+      version => "0.5";
 }
 
 bundle agent cfengine_repo
 {
   files:
       "/etc/apt/sources.list.d/cfengine-community.list"
+        comment => "Install and enable CFEngine community repository",
         create => "true",
         edit_defaults => empty,
-        edit_line => cfengine_community_list,
+        edit_line => insert_lines("deb http://cfengine.com/pub/apt precise main"),
         classes => if_repaired("apt_get_update");
       
   classes:
@@ -93,51 +92,36 @@ bundle agent cfengine_repo
 
   commands:
     !cfengine_gpg_key_installed::
-      "/usr/bin/wget \"http://cfengine.com/pub/gpg.key\" -O /tmp/gpg.key";
-      "/usr/bin/apt-key add /tmp/gpg.key";
-
+      "/usr/bin/wget" args => "\"http://cfengine.com/pub/gpg.key\" -O /tmp/gpg.key";
+      "/usr/bin/apt-key" args => "add /tmp/gpg.key";
     apt_get_update::
-      "/usr/bin/apt-get update";
-}
-
-bundle edit_line cfengine_community_list
-{
-  insert_lines:
-      "deb http://cfengine.com/pub/apt precise main";
+      "/usr/bin/apt-get" args => "update";
 }
 
 bundle agent corepackages
 {
   files:
       "/tmp/.s.PGSQL.5432"
+        comment => "CFEngine requires PostgreSQL socket in the old location",
         link_from => ln_s("/run/postgresql/.s.PGSQL.5432");
+
   vars:
-      "pkglist" slist => { "cfengine-community", "vim", "git" };
+      "pkglist" slist => { "cfengine-community", "vim", "git", "wget" },
+        comment => "A basic list of packages installed with the bootstrap deployment script",
+        policy => "free";
+    rails_app_server::
+      "pkglist" slist => { @{pkglist}, "gcc", "make", "ruby1.9.1", "ruby1.9.1-dev" }, policy => "free";
+    synth_pl::
+      "pkglist" slist => { @{pkglist}, "ekg" }, policy => "free";
 
   packages:
-    any::
       "$(pkglist)" package_policy => "addupdate";
-    rails_app_server::
-      "gcc"
-        package_policy => "addupdate",
-        package_method => generic;
-      "make"
-        package_policy => "addupdate",
-        package_method => generic;
-      "ruby1.9.1"
-        package_policy => "addupdate",
-        package_method => generic;
-      "ruby1.9.1-dev"
-        package_policy => "addupdate",
-        package_method => generic;
-    synth_pl::
-      "ekg"
-        package_policy => "addupdate";
 
   files:
     rails_app_server::
       "/var/lib/gems/expanded_gem_list.sh"
         perms => m("0755"),
+        comment => "Wrapper for the /usr/bin/gem list command that expands list of packages so CFEngine can parse it",
         copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/expanded_gem_list.sh", "$(sys.policy_hub)");
 }
 
@@ -157,9 +141,6 @@ APT::Install-Suggests \"0\";";
       "sshd[UseDNS]" string => "no";
 
   files:
-      "/etc/apt/apt.conf.d/."
-        create => "true";
-      
       "/etc/apt/apt.conf.d/20recommends"
         create => "true",
         perms => m("0644"),
@@ -167,14 +148,21 @@ APT::Install-Suggests \"0\";";
         comment => "Disable Recomendation and Suggestion installation in Apt",
         edit_defaults => empty,
         edit_line => insert_lines("$(install_only_requested)");
-
-      # A deployment SSH key, not available in the public repository
       "/root/.ssh/id_rsa"
+        comment =>  "A deployment SSH key, not available in the public repository",
         copy_from => secure_cp("$(sys.workdir)/masterfiles/templates/deployment.sshkey", "$(sys.policy_hub)");
+      "/tmp/hosts.tmpl"
+        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/hosts.tmpl", "$(sys.policy_hub)");
+      "/etc/hosts"
+        comment => "Define a static list of hosts from the template",
+        create => "true",
+        edit_defaults => empty,
+        edit_line => expand_template("/tmp/hosts.tmpl"),
+        perms => mo("0644", "root"),
+        action => if_elapsed("immediate");
 
   methods:
       "sshd" usebundle => edit_sshd;
-      "hosts" usebundle => edit_hosts_file;
 }
 
 bundle agent edit_sshd
@@ -194,20 +182,6 @@ bundle agent edit_sshd
         "/usr/sbin/service ssh reload"
         handle => "sshd_restart",
         comment => "Restart the SSH daemon if the configuration changes";
-}
-
-bundle agent edit_hosts_file
-{
-  files:
-      "/tmp/hosts.tmpl"
-        copy_from => remote_cp("$(sys.workdir)/masterfiles/templates/hosts.tmpl", "$(sys.policy_hub)");
-      "/etc/hosts"
-        comment => "Define a static list of hosts from the template",
-        create => "true",
-        edit_defaults => empty,
-        edit_line => expand_template("/tmp/hosts.tmpl"),
-        perms => mo("0644", "root"),
-        action => if_elapsed("immediate");
 }
 
 bundle agent manage_users
