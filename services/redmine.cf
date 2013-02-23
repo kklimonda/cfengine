@@ -96,6 +96,7 @@ bundle agent redmine_tarball_is_unpacked(instance)
         depth_search => recurse_include_base("inf"),
         action => immediate;
     "$(redmine_g.conf[$(instance)][root])/."
+        create => "true",
         perms => mog("0755", "www-data", "www-data"),
         file_select => dirs,
         depth_search => recurse_include_base("inf"),
