@@ -117,7 +117,7 @@ bundle agent corepackages
         policy => "free";
     rails_app_server::
       "pkglist" slist => { @{pkglist}, "gcc", "make", "ruby1.9.1", "ruby1.9.1-dev" }, policy => "free";
-    synth_pl::
+    homer::
       "pkglist" slist => { @{pkglist}, "ekg" }, policy => "free";
 
   packages:
