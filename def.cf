@@ -20,5 +20,5 @@ bundle common def
         comment => "Define modules path";
 
   classes:
-    "sandbox" expression => classmatch(".*_synth_dev");
+    "sandbox" expression => classmatch(".*synth_dev");
 }
