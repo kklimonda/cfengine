@@ -48,8 +48,8 @@ bundle common g
       }, policy => "free";
     synth::
       "bseq" slist => {
-        "synth_change_hostname",
         @{bseq},
+        "synth_change_hostname"
       }, policy => "free";
 }
 
