@@ -134,6 +134,11 @@ bundle agent corepackages
 bundle agent configfiles
 {
   vars:
+    !ubuntu_10_4::
+      "dhclient_conf" string => "/etc/dhcp/dhclient.conf";
+    ubuntu_10_4::
+      "dhclient_conf" string => "/etc/dhcp3/dhclient.conf";
+    any::
       "install_only_requested" string =>
 "APT::Install-Recommends \"0\";
 APT::Install-Suggests \"0\";";
@@ -166,7 +171,7 @@ APT::Install-Suggests \"0\";";
         edit_line => expand_template("/tmp/hosts.tmpl"),
         perms => mo("0644", "root"),
         action => if_elapsed("immediate");
-      "/etc/dhcp/dhclient.conf"
+      "$(dhclient_conf)"
         comment => "Set a correct domain for all hosts",
         edit_line => replace_or_add("#supersede domain-name.*", "supersede domain-name \"$(def.domain)\";");
 
