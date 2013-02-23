@@ -272,6 +272,8 @@ bundle agent redmine_configure_unicorn(instance)
       handle => "fix_gem_perms";
 
   commands:
+    restart_unicorn.sandbox::
+        "/bin/kill" args => "-HUP 1";
     restart_unicorn.!no_restarts::
         "/usr/sbin/service unicorn_$(instance) restart",
           depends_on => { "fix_gem_perms" };
