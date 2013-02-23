@@ -12,7 +12,6 @@ bundle common classes
       "rails_app_server" or => { classify("synth") };
       "redmine_app_server" or => { classify("synth") };
       "redmine_akronet" or => { classify("synth") };
-      "git_server" or => { classify("synth") };
 }
 
 bundle common g
@@ -45,11 +44,6 @@ bundle common g
         @{bseq},
         "redmine"
       }, policy => "free";
-    git_server::
-      "bseq" slist => {
-        @{bseq},
-        "gitolite"
-      }, policy => "free";
 }
 
 body common control
@@ -77,7 +71,6 @@ body common control
             "libraries/library.cf",
 
             "services/postfix.cf",
-            "services/gitolite.cf",
             "services/postgres.cf",
             "services/redmine.cf",
             "services/nginx.cf",
