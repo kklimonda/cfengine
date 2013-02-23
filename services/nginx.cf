@@ -20,7 +20,7 @@ bundle agent nginx
       "/etc/nginx/nginx.conf"
         edit_line => uncomment_lines_matching(".*server_names_hash_bucket_size.*", "        #"),
         classes => if_repaired("restart_nginx");
-    synth_pl::
+    homer::
       "/etc/nginx/sites-enabled/akronet_redirect",
         link_from => ln_s("/etc/nginx/sites-available/akronet_redirect"),
         classes => if_repaired("restart_nginx");

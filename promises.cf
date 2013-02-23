@@ -205,7 +205,7 @@ bundle agent manage_users
       "users[kklimonda][shell]" string => "/bin/bash";
       "users[kklimonda][flags]" string => "-m";
       "users[kklimonda][passwd_hash]" string => "$(private_g.password[shadow_kklimonda])";
-    synth_pl::
+    homer::
       "users[thorin][fullname]" string => "Grzegorz Wolaniuk";
       "users[thorin][shell]" string => "/bin/bash";
       "users[thorin][flags]" string => "-m";
