@@ -64,6 +64,9 @@ bundle agent ruby_fix_gems_perms
         file_select => dirs,
         depth_search => recurse_include_base("inf"),
         action => immediate;
+      "/var/lib/gems/expanded_gem_list.sh"
+        perms => m("0755"),
+        action => immediate;
 }
 
 body depth_search recurse_include_base(d)
