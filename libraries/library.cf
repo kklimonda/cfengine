@@ -8,7 +8,7 @@ body package_method gem
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
+  package_add_command => "/usr/bin/gem install --no-rdoc --no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -I -a -x ";
   package_update_command => "/usr/bin/gem update ";
 
@@ -26,7 +26,7 @@ body package_method gem_versioned
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
+  package_add_command => "/usr/bin/gem install --no-rdoc --no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem install ";
 
@@ -44,7 +44,7 @@ body package_method gem_fuzzy_versioned
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
   package_installed_regex => ".*"; # all reported are installed
 
-  package_add_command => "/usr/bin/gem install -no-rdoc -no-ri ";
+  package_add_command => "/usr/bin/gem install --no-rdoc --no-ri ";
   package_delete_command => "/usr/bin/gem uninstall -a -x ";
   package_update_command => "/usr/bin/gem install ";
 
