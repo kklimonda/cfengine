@@ -18,11 +18,11 @@ bundle agent postfix
 bundle edit_line prefix_postfix
 {
   vars:
-      "ps[mydomain]" string => "synth.pl";
+      "ps[mydomain]" string => "$(def.domain)";
       "ps[biff]" string => "no";
       "ps[append_dot_mydomain]" string => "no";
       "ps[readme_directory]" string => "no";
-      "ps[mydomain]" string => "synth.pl";
+      "ps[mydomain]" string => "$(def.domain)";
       "ps[smtpd_tls_cert_file]" string => "/etc/ssl/certs/ssl-cert-snakeoil.pem";
       "ps[smtpd_tls_key_file]" string => "/etc/ssl/private/ssl-cert-snakeoil.key";
       "ps[smtpd_use_tls]" string => "yes";
@@ -34,7 +34,7 @@ bundle edit_line prefix_postfix
       "ps[mynetworks]" string => "127.0.0.0/8";
       "ps[alias_maps]" string => "hash:/etc/aliases";
       "ps[alias_database]" string => "hash:/etc/aliases";
-      "ps[mydestination]" string => "synth.pl, localhost";
+      "ps[mydestination]" string => "$(def.domain), localhost";
       "ps[mailbox_size_limit]" string => "0";
       "ps[recipient_delimiter]" string => "+";
 

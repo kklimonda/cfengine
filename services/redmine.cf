@@ -10,7 +10,7 @@ bundle common redmine_g {
       "conf[akronet][database]" string => "redmine_akronet_production";
       "conf[akronet][username]" string => "akronet";
       "conf[akronet][password]" string => "$(private_g.password[postgres_redmine_akronet])";
-      "conf[akronet][root]" string => "/srv/akronet.synth.pl";
+      "conf[akronet][root]" string => "/srv/akronet.$(def.domain)";
       "conf[akronet][plugin]" slist => { "redmine_akronet_mods" };
       "conf[akronet][port]" string => "3000";
 
@@ -20,7 +20,7 @@ bundle common redmine_g {
       "conf[internal][database]" string => "redmine_internal_production";
       "conf[internal][username]" string => "issues";
       "conf[internal][password]" string => "P@ssw0rd";
-      "conf[internal][root]" string => "/srv/issues.synth.pl";
+      "conf[internal][root]" string => "/srv/issues.$(def.domain)";
       "conf[internal][plugin]" slist => { cf_null };
       "conf[internal][port]" string => "3100";
 

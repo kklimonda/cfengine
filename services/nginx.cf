@@ -5,7 +5,7 @@ bundle agent nginx
 "server {
     listen 80;
     server_name  akronet.syntaxhighlighted.com;
-    rewrite ^(.*)$ http://akronet.synth.pl$1 permanent;
+    rewrite ^(.*)$ http://akronet.$(def.domain)$1 permanent;
 }
 ";
 
