@@ -151,6 +151,10 @@ bundle agent corepackages
 bundle agent configfiles
 {
   vars:
+      "install_only_requested" string =>
+"APT::Install-Recommends \"0\";
+APT::Install-Suggests \"0\";";
+
       "files[sshd]" string => "/etc/ssh/sshd_config";
 
       "sshd[Protocol]" string => "2";
@@ -168,7 +172,8 @@ bundle agent configfiles
         perms => m("0644"),
         handle => "apt_config",
         comment => "Disable Recomendation and Suggestion installation in Apt",
-        edit_line => edit_apt_config;
+        edit_defaults => empty,
+        edit_line => insert_lines("$(install_only_requested)");
 
       # A deployment SSH key, not available in the public repository
       "/root/.ssh/id_rsa"
@@ -260,16 +265,6 @@ bundle agent create_users(list)
         edit_line => set_user_field("$(user)", 2, "$($(list)[$(user)][passwd_hash])");
       "/etc/group"
         edit_line => append_user_field("sudo", 4, "$(user)");
-}
-
-bundle edit_line edit_apt_config
-{
-  delete_lines:
-      ".*";
-
-  insert_lines:
-      "APT::Install-Recommends \"0\";";
-      "APT::Install-Suggests \"0\";";
 }
 
 body database_server postgres_master(user, password)
