@@ -4,6 +4,9 @@ bundle agent postfix
       "postfix";
 
   files:
+      "/etc/aliases"
+        edit_line => append_if_no_line("root: kklimonda"),
+        classes => if_repaired("newaliases");
       "/etc/postfix/main.cf"
         create => "true",
         edit_defaults => empty,
@@ -13,6 +16,8 @@ bundle agent postfix
   commands:
     restart_postfix::
       "/usr/sbin/service" args => "postfix restart";
+    newaliases::
+      "/usr/bin/newaliases";
 }
 
 bundle edit_line prefix_postfix
