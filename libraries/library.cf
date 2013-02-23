@@ -38,7 +38,7 @@ body package_method gem_fuzzy_versioned
 { 
   package_changes => "individual";
 
-  package_list_command => "/usr/bin/gem list";
+  package_list_command => "/var/lib/gems/expanded_gem_list.sh";
 
   package_list_name_regex => "^([^\s]+)\s\([\d.]+\)";
   package_list_version_regex => "^[^\s]+\s\(([\d.]+)\)";
