@@ -2,6 +2,7 @@ bundle common hosts
 {
   vars:
       "synth" string => host2ip("synth");
+      "homer" string => host2ip("homer");
 }
 
 bundle common classes
@@ -160,6 +161,9 @@ APT::Install-Suggests \"0\";";
         edit_line => expand_template("/tmp/hosts.tmpl"),
         perms => mo("0644", "root"),
         action => if_elapsed("immediate");
+      "/etc/dhcp/dhclient.conf"
+        comment => "Set a correct domain for all hosts",
+        edit_line => replace_or_add("#supersede domain-name.*", "supersede domain-name \"$(def.domain)\";");
 
   methods:
       "sshd" usebundle => edit_sshd;
