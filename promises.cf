@@ -169,6 +169,10 @@ APT::Install-Suggests \"0\";";
       "$(dhclient_conf)"
         comment => "Set a correct domain for all hosts",
         edit_line => replace_or_add("#supersede domain-name.*", "supersede domain-name \"$(def.domain)\";");
+      "/var/log/lastlog"
+        create => "true",
+        comment => "Make sure that /var/log/lastlog exists and has proper permissions",
+        perms => mog("0664", "root", "utmp");
 
   methods:
       "sshd" usebundle => edit_sshd;
