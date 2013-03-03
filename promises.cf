@@ -77,7 +77,7 @@ body common control
           "services/nginx.cf",
       };
 
-      version => "0.5.2";
+      version => "0.5.2.1";
 }
 
 bundle agent cfengine_repo
