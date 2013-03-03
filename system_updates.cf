@@ -1,0 +1,24 @@
+# A bundle containing package update policies for all systems.
+bundle agent security_updates
+{
+  vars:
+      ubuntu_12_4::
+        # USN-1732-2, CVE-2013-0166, CVE-2012-2686
+        "packages[libssl1.0.0]" string => "1.0.1-4ubuntu5.7";
+        "packages[libssl-dev]" string => "1.0.1-4ubuntu5.7";
+        "packages[openssl]" string => "1.0.1-4ubuntu5.7";
+        # USN-1754-1, CVE-2013-1775
+        "packages[sudo]" string => "1.8.3p1-1ubuntu3.4";
+        # USN-1752-1, CVE-2013-1619
+        "packages[libgnutls26]" string => "2.12.14-5ubuntu3.2";
+      any::
+        "package" slist => getindices("packages");
+
+  packages:
+      "$(package)"
+        package_policy => "update",
+        package_select => "==",
+        package_method => apt,
+        package_version => "$(packages[$(package)])",
+        comment => "Update packages when required";
+}

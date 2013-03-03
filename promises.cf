@@ -21,6 +21,7 @@ bundle common g
   vars:
     any::
       "bseq" slist => {
+        "security_updates",
         "manage_users",
         "cfengine_repo",
         "corepackages",
@@ -69,6 +70,7 @@ body common control
           "libraries/cfengine_stdlib.cf",
           "libraries/library.cf",
 
+          "system_updates.cf",
           "services/postfix.cf",
           "services/postgres.cf",
           "services/redmine.cf",
