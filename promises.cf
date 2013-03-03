@@ -8,12 +8,12 @@ bundle common hosts
 bundle common classes
 {
   classes:
-      "mail_server" or => { classify("synth") };
-      "database_master" or => { classify("synth") };
-      "web_server" or => { classify("synth") };
-      "rails_app_server" or => { classify("synth") };
-      "redmine_app_server" or => { classify("synth") };
-      "redmine_akronet" or => { classify("synth") };
+      "mail_server" or => { classify("homer") };
+      "database_master" or => { classify("homer") };
+      "web_server" or => { classify("homer") };
+      "rails_app_server" or => { classify("homer") };
+      "redmine_app_server" or => { classify("homer") };
+      "redmine_akronet" or => { classify("homer") };
 }
 
 bundle common g
