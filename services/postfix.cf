@@ -11,6 +11,7 @@ bundle agent postfix
         create => "true",
         edit_defaults => empty,
         edit_line => prefix_postfix,
+        perms => m("0644"),
         classes => if_repaired("restart_postfix");
 
   commands:
