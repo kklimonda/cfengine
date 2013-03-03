@@ -18,7 +18,7 @@ bundle agent nginx
 
   files:
       "/etc/nginx/nginx.conf"
-        edit_line => uncomment_lines_matching(".*server_names_hash_bucket_size.*", "        #"),
+        edit_line => change_nginx_http_conf, 
         classes => if_repaired("restart_nginx");
     homer::
       "/etc/nginx/sites-enabled/akronet_redirect",
@@ -35,3 +35,15 @@ bundle agent nginx
     restart_nginx::
       "/usr/sbin/service nginx restart";
 }
+
+bundle edit_line change_nginx_http_conf
+{
+  replace_patterns:
+      ".*# server_names_hash_bucket_size.*"
+        replace_with => value("	server_names_hash_bucket_size 64;");
+
+  insert_lines:
+      "	client_max_body_size 55m;"
+        location => after("http {");
+}
+
