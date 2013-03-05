@@ -109,7 +109,7 @@ bundle agent corepackages
         link_from => ln_s("/run/postgresql/.s.PGSQL.5432");
 
   vars:
-      "pkglist" slist => { "cfengine-community", "vim", "git", "wget" },
+      "pkglist" slist => { "cfengine-community", "vim", "git", "wget", "screen", "mc" },
         comment => "A basic list of packages installed with the bootstrap deployment script",
         policy => "free";
     rails_app_server::
