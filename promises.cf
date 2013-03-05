@@ -211,6 +211,8 @@ bundle agent manage_users
       "users[thorin][shell]" string => "/bin/bash";
       "users[thorin][flags]" string => "-m";
       "users[thorin][passwd_hash]" string => "$(private_g.password[shadow_thorin])";
+    any::
+      "sudo" slist => { "kklimonda" };
 
   methods:
       "users" usebundle => create_users("manage_users.users");
@@ -232,7 +234,7 @@ bundle agent create_users(list)
       "/etc/shadow"
         edit_line => set_user_field("$(user)", 2, "$($(list)[$(user)][passwd_hash])");
       "/etc/group"
-        edit_line => append_user_field("sudo", 4, "$(user)");
+        edit_line => append_user_field("sudo", 4, "$(manage_users.sudo)");
 }
 
 body database_server postgres_master(user, password)
